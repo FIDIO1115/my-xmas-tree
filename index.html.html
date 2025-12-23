@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,14 +8,14 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; }
         
-        /* 質感金屬漸層標題 */
+        /* 標題樣式修正：確保金色漸層與藝術字體顯示 */
         #main-title { 
             position: absolute; top: 40px; left: 0; width: 100%; text-align: center; 
             z-index: 999; pointer-events: none; opacity: 0; transition: opacity 1s ease; 
             font-family: 'Great Vibes', cursive; font-size: 6rem;
             background: linear-gradient(to bottom, #ffd700 20%, #fffacd 50%, #ffaa00 80%);
             -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.5));
+            filter: drop-shadow(0 0 20px rgba(255, 215, 0, 0.6));
         }
 
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #001a00 0%, #000 100%); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; }
@@ -29,7 +29,7 @@
         #wish-wall.active { opacity: 1; pointer-events: auto; }
         .wall-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 10px; padding: 20px; max-width: 90vw; }
         .wall-grid img { width: 100%; aspect-ratio: 1/1; object-fit: cover; border-radius: 8px; border: 2px solid rgba(255,215,0,0.5); }
-        #wish-text { font-family: 'Great Vibes', cursive; font-size: 5rem; color: #ffd700; text-shadow: 0 0 30px #ffd700; margin-bottom: 20px; }
+        #wish-text { font-family: 'Great Vibes', cursive; font-size: 5rem; color: #ffd700; text-shadow: 0 0 30px #ffd700; margin-bottom: 20px; text-align: center; }
 
         #input_video { position: absolute; bottom: 25px; left: 25px; width: 180px; height: 135px; border-radius: 15px; border: 2px solid rgba(255,255,255,0.2); transform: scaleX(-1); z-index: 100; object-fit: cover; opacity: 0.5; }
         .hint { position: absolute; bottom: 30px; width: 100%; text-align: center; color: rgba(255,255,255,0.6); font-size: 14px; pointer-events: none; z-index: 100; }
@@ -83,7 +83,7 @@
     </script>
 
     <script>
-        const PHOTO_COUNT = 31; // 照片總數
+        const PHOTO_COUNT = 31; // 修改為 31 張照片
         const state = { explosion: 0.0, targetExplosion: 0.0, photoActive: false, currentIndex: 0, pinchLocked: false, isWishActive: false };
         let scene, camera, renderer, clock, treeGroup, particleSystem, photoMeshes = [], loadedImages = [];
         let audioCtx, analyser, dataArray, audioEl;
@@ -122,13 +122,13 @@
                 img.onload = () => {
                     loadedImages[i-1] = img;
                     loadedCount++;
-                    if (loadedCount === PHOTO_COUNT) {
-                        updatePhotos();
-                        createWall();
-                    }
+                    if (loadedCount === PHOTO_COUNT) { updatePhotos(); createWall(); }
                 };
                 img.src = `${i}.jpg`;
-                img.onerror = () => { loadedCount++; if (loadedCount === PHOTO_COUNT) { updatePhotos(); createWall(); } };
+                img.onerror = () => { 
+                    loadedCount++; 
+                    if (loadedCount === PHOTO_COUNT) { updatePhotos(); createWall(); } 
+                };
             }
         }
 
@@ -146,7 +146,7 @@
             const source = audioCtx.createMediaElementSource(audioEl);
             source.connect(analyser); analyser.connect(audioCtx.destination);
             dataArray = new Uint8Array(analyser.frequencyBinCount);
-            audioEl.play();
+            audioEl.play().catch(e => console.log("音樂播放受阻，需使用者點擊按鈕"));
         }
 
         function initThree() {
@@ -216,30 +216,18 @@
             hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.75, minTrackingConfidence: 0.5 });
             
             hands.onResults(results => {
-                let rightVisible = false, leftVisible = false;
-                let hL = null, hR = null;
-
+                let rightVisible = false, leftVisible = false, hL = null, hR = null;
                 if (results.multiHandLandmarks) {
                     results.multiHandLandmarks.forEach((lm, index) => {
                         const label = results.multiHandedness[index].label;
-                        if (label === 'Left') { hL = lm; leftVisible = true; }
-                        else { hR = lm; rightVisible = true; }
+                        if (label === 'Left') { hL = lm; leftVisible = true; } else { hR = lm; rightVisible = true; }
                     });
                 }
-
                 if (leftVisible && rightVisible) {
                     const dist = Math.hypot(hL[9].x - hR[9].x, hL[9].y - hR[9].y);
-                    if (dist < 0.1) { 
-                        document.getElementById('wish-wall').classList.add('active');
-                        state.isWishActive = true;
-                    } else {
-                        document.getElementById('wish-wall').classList.remove('active');
-                        state.isWishActive = false;
-                    }
-                } else {
-                    document.getElementById('wish-wall').classList.remove('active');
-                    state.isWishActive = false;
-                }
+                    if (dist < 0.1) { document.getElementById('wish-wall').classList.add('active'); state.isWishActive = true; }
+                    else { document.getElementById('wish-wall').classList.remove('active'); state.isWishActive = false; }
+                } else { document.getElementById('wish-wall').classList.remove('active'); state.isWishActive = false; }
 
                 if (leftVisible && !state.isWishActive) {
                     const d = Math.hypot(hL[8].x - hL[20].x, hL[8].y - hL[20].y);
@@ -249,15 +237,9 @@
                 if (rightVisible && !state.isWishActive) {
                     const pinch = Math.hypot(hR[4].x - hR[8].x, hR[4].y - hR[8].y);
                     if (pinch < 0.045) {
-                        if (!state.pinchLocked) {
-                            state.currentIndex = (state.currentIndex + 1) % PHOTO_COUNT;
-                            updateModal();
-                            state.pinchLocked = true;
-                        }
+                        if (!state.pinchLocked) { state.currentIndex = (state.currentIndex + 1) % PHOTO_COUNT; updateModal(); state.pinchLocked = true; }
                     } else { state.pinchLocked = false; }
-                } else {
-                    document.getElementById('photo-modal').classList.remove('active');
-                }
+                } else { document.getElementById('photo-modal').classList.remove('active'); }
             });
 
             new Camera(document.getElementById('input_video'), {
