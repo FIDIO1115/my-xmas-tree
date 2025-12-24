@@ -42,7 +42,7 @@
     </div>
     <div id="wish-wall">
         <div class="film-container"><div class="film-strip strip-top" id="strip-top"></div></div>
-        <div id="wish-text">千代 祝你聖誕快樂<br><span style="font-size: 1.2rem; opacity: 0.8;">每一幀都是我們的珍貴回憶</span></div>
+        <div id="wish-text">千代 祝你聖誕快樂<br><span style="font-size: 1.2rem; opacity: 0.8;">每一幀都是今年的珍貴回憶</span></div>
         <div class="film-container"><div class="film-strip strip-bottom" id="strip-bottom"></div></div>
     </div>
     <div id="photo-modal"><img id="modal-img" src=""></div>
@@ -72,7 +72,7 @@
     <script>
         const PHOTO_COUNT = 77;
         const TREE_LIMIT = 30;
-        const state = { explosion: 0.0, targetExplosion: 0.0, currentIndex: 0, tapCount: 0, lastTapTime: 0, pinchDist: 0, startX: 0 };
+        const state = { explosion: 0.0, targetExplosion: 0.0, currentIndex: 0, tapCount: 0, lastTapTime: 0, pinchDist: 0, startX: 0, pinchLocked: false };
         let scene, camera, renderer, treeGroup, particleSystem, photoMeshes = [], loadedImages = [];
         let raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
@@ -160,21 +160,13 @@
             const wish = document.getElementById('wish-wall');
             window.addEventListener('touchstart', (e) => {
                 const now = Date.now();
-                
-                // 連點三下開啟驚喜牆
-                if (now - state.lastTapTime < 500) {
-                    state.tapCount++;
-                } else {
-                    state.tapCount = 1;
-                }
+                if (now - state.lastTapTime < 500) { state.tapCount++; } else { state.tapCount = 1; }
                 state.lastTapTime = now;
-
                 if (state.tapCount === 3) {
                     if(wish.style.display === 'flex') { wish.classList.remove('active'); setTimeout(()=>wish.style.display='none',800); }
                     else { wish.style.display = 'flex'; setTimeout(()=>wish.classList.add('active'),10); }
                     state.tapCount = 0;
                 }
-
                 if (e.touches.length === 1) {
                     state.startX = e.touches[0].pageX;
                     if(!modal.classList.contains('active')) {
@@ -212,13 +204,29 @@
                 let hR = null, hL = null;
                 if (results.multiHandLandmarks) results.multiHandLandmarks.forEach((lm, i) => { if(results.multiHandedness[i].label === 'Right') hR = lm; else hL = lm; });
                 const wish = document.getElementById('wish-wall');
+                
                 if (hR) { 
                     const thumbIndexDist = Math.hypot(hR[4].x - hR[8].x, hR[4].y - hR[8].y);
                     const isMiddleDown = hR[12].y > hR[9].y;
+                    
+                    // 比7開啟驚喜牆
                     if (thumbIndexDist > 0.15 && isMiddleDown) { wish.style.display = 'flex'; setTimeout(()=>wish.classList.add('active'), 10); }
                     else { wish.classList.remove('active'); setTimeout(()=>wish.style.display='none', 800); }
+                    
+                    // 捏合換圖邏輯
+                    if (thumbIndexDist < 0.04) {
+                        if (!state.pinchLocked) { 
+                            const nextIdx = (state.currentIndex + 1) % PHOTO_COUNT;
+                            showPhoto(nextIdx);
+                            state.pinchLocked = true; 
+                        }
+                    } else { state.pinchLocked = false; }
                 }
-                if (hL) { const d = Math.hypot(hL[8].x - hL[20].x, hL[8].y - hL[20].y); state.targetExplosion = d > 0.4 ? 1 : 0; }
+                
+                if (hL) { 
+                    const d = Math.hypot(hL[8].x - hL[20].x, hL[8].y - hL[20].y); 
+                    state.targetExplosion = d > 0.4 ? 1 : 0; 
+                }
             });
             new Camera(vid, { onFrame: async () => { await hands.send({image: vid}); }, width: 320, height: 240 }).start();
         }
@@ -229,8 +237,8 @@
             const audio = new Audio("Sia - Snowman.mp3"); audio.loop = true;
             audio.play().catch(() => { audio.src = "https://www.soundboard.com/handler/DownLoadTrack.ashx?cliptitle=Sia+-+Snowman&filename=m4/MjIx/221856-4c740348-773a-4467-8722-e781e5b8d003.mp3"; audio.play(); });
             initThree(); loadPhotos(); initTouch();
-            if(!isMobile) try { startHandTracking(); document.getElementById('hint-text').innerText = "右手比7開啟膠捲 | 左手開掌爆炸"; } catch(e) {}
-            else document.getElementById('hint-text').innerText = "單點照片放大 | 左右滑動切換 | 連點三下開啟膠捲";
+            if(!isMobile) try { startHandTracking(); document.getElementById('hint-text').innerText = "右手比7開啟膠捲 | 右手捏換圖 | 左手開掌爆炸"; } catch(e) {}
+            else document.getElementById('hint-text').innerText = "單點放大 | 左右滑動換圖 | 連點三下膠捲";
         });
     </script>
 </body>
