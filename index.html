@@ -8,64 +8,27 @@
     <style>
         body { margin: 0; overflow: hidden; background-color: #000; font-family: 'Segoe UI', sans-serif; touch-action: none; }
         #main-title { position: absolute; top: 40px; left: 0; width: 100%; text-align: center; z-index: 500; opacity: 0; transition: opacity 1s ease; font-family: 'Great Vibes', cursive; font-size: 3.5rem; background: linear-gradient(to bottom, #ffd700 20%, #fffacd 50%, #ffaa00 80%); -webkit-background-clip: text; -webkit-text-fill-color: transparent; filter: drop-shadow(0 0 15px rgba(255, 215, 0, 0.7)); pointer-events: none; }
-        
         #start-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: radial-gradient(circle, #001a00 0%, #000 100%); z-index: 2000; display: flex; flex-direction: column; justify-content: center; align-items: center; color: #fff; text-align: center; }
         #btn-start { padding: 18px 60px; font-size: 22px; background: linear-gradient(90deg, #ffd700, #ffaa00); border: none; border-radius: 40px; color: #000; font-weight: bold; cursor: pointer; box-shadow: 0 0 40px rgba(255, 215, 0, 0.4); margin-top: 20px; }
-        
-        /* 膠捲牆容器 */
         #wish-wall { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.92); z-index: 1800; display: none; flex-direction: column; align-items: center; justify-content: space-around; opacity: 0; transition: opacity 0.8s ease; backdrop-filter: blur(15px); }
         #wish-wall.active { display: flex; opacity: 1; }
         #wish-text { font-family: 'Ma Shan Zheng', cursive; font-size: 2.5rem; color: #ffd700; text-shadow: 0 0 20px #ffd700; text-align: center; margin: 10px 0; z-index: 10; }
-
-        /* 電影膠捲核心樣式 */
         .film-container { width: 100%; display: flex; overflow: hidden; position: relative; padding: 20px 0; background: rgba(20, 20, 20, 0.5); }
-        .film-strip { 
-            display: flex; 
-            width: max-content; 
-            background: #111; 
-            padding: 30px 10px; /* 上下留白給齒孔 */
-            position: relative;
-            align-items: center;
-        }
-
-        /* 繪製齒孔 (上下兩排) */
-        .film-strip::before, .film-strip::after {
-            content: "";
-            position: absolute;
-            left: 0;
-            width: 100%;
-            height: 12px;
-            background-image: repeating-linear-gradient(to right, #000 0, #000 15px, #444 15px, #444 30px);
-            background-size: 40px 100%;
-        }
+        .film-strip { display: flex; width: max-content; background: #111; padding: 30px 10px; position: relative; align-items: center; }
+        .film-strip::before, .film-strip::after { content: ""; position: absolute; left: 0; width: 100%; height: 12px; background-image: repeating-linear-gradient(to right, #000 0, #000 15px, #444 15px, #444 30px); background-size: 40px 100%; }
         .film-strip::before { top: 8px; }
         .film-strip::after { bottom: 8px; }
-
         .strip-top { animation: moveRight 65s linear infinite; }
         .strip-bottom { animation: moveLeft 65s linear infinite; }
-
-        .film-strip img { 
-            height: 140px; 
-            width: auto; 
-            margin: 0 5px; 
-            border: 2px solid #222; 
-            filter: brightness(0.9) contrast(1.1);
-        }
-
+        .film-strip img { height: 140px; width: auto; margin: 0 5px; border: 2px solid #222; filter: brightness(0.9) contrast(1.1); }
         @keyframes moveLeft { 0% { transform: translateX(0); } 100% { transform: translateX(-50%); } }
         @keyframes moveRight { 0% { transform: translateX(-50%); } 100% { transform: translateX(0); } }
-
         #photo-modal { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%) scale(0.8); width: 85%; max-width: 450px; background: #fff; padding: 10px; box-shadow: 0 0 50px rgba(255,255,255,0.3); z-index: 2500; opacity: 0; pointer-events: none; transition: all 0.3s ease; border-radius: 12px; }
         #photo-modal.active { opacity: 1; transform: translate(-50%, -50%) scale(1); pointer-events: auto; }
-        
+        #photo-modal img { width: 100%; display: block; border-radius: 4px; pointer-events: none; }
         #input_video { position: absolute; bottom: 10px; right: 10px; width: 120px; height: 90px; border-radius: 10px; transform: scaleX(-1); z-index: 100; opacity: 0.5; display: none; }
         .hint { position: absolute; bottom: 20px; width: 100%; text-align: center; color: rgba(255,255,255,0.4); font-size: 12px; z-index: 100; pointer-events: none; }
-        
-        @media (max-width: 768px) {
-            .film-strip img { height: 100px; }
-            .film-strip { padding: 20px 5px; }
-            #wish-text { font-size: 1.8rem; }
-        }
+        @media (max-width: 768px) { .film-strip img { height: 100px; } .film-strip { padding: 20px 5px; } #wish-text { font-size: 1.8rem; } }
     </style>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@mediapipe/camera_utils/camera_utils.js"></script>
@@ -76,19 +39,12 @@
     <div id="start-screen">
         <h1 style="font-family: 'Great Vibes'; font-size: 3.5rem; color: #ffd700; margin: 0;">Winter Magic</h1>
         <button id="btn-start">開啟聖誕魔法 ✨</button>
-        <p id="status-text" style="color:#888; font-size:12px; margin-top:10px;">魔法載入中...</p>
     </div>
-
     <div id="wish-wall">
-        <div class="film-container">
-            <div class="film-strip strip-top" id="strip-top"></div>
-        </div>
+        <div class="film-container"><div class="film-strip strip-top" id="strip-top"></div></div>
         <div id="wish-text">千代 祝你聖誕快樂<br><span style="font-size: 1.2rem; opacity: 0.8;">每一幀都是我們的珍貴回憶</span></div>
-        <div class="film-container">
-            <div class="film-strip strip-bottom" id="strip-bottom"></div>
-        </div>
+        <div class="film-container"><div class="film-strip strip-bottom" id="strip-bottom"></div></div>
     </div>
-
     <div id="photo-modal"><img id="modal-img" src=""></div>
     <video id="input_video"></video>
     <div class="hint" id="hint-text"></div>
@@ -116,8 +72,9 @@
     <script>
         const PHOTO_COUNT = 77;
         const TREE_LIMIT = 30;
-        const state = { explosion: 0.0, targetExplosion: 0.0, currentIndex: 0, lastTap: 0, pinchDist: 0 };
+        const state = { explosion: 0.0, targetExplosion: 0.0, currentIndex: 0, tapCount: 0, lastTapTime: 0, pinchDist: 0, startX: 0 };
         let scene, camera, renderer, treeGroup, particleSystem, photoMeshes = [], loadedImages = [];
+        let raycaster = new THREE.Raycaster(), mouse = new THREE.Vector2();
         const isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
 
         function initThree() {
@@ -128,7 +85,6 @@
             renderer.setSize(window.innerWidth, window.innerHeight);
             document.body.appendChild(renderer.domElement);
             treeGroup = new THREE.Group(); scene.add(treeGroup);
-
             const count = isMobile ? 8000 : 12000;
             const geo = new THREE.BufferGeometry();
             const pos = [], sph = [], col = [], siz = [];
@@ -168,72 +124,68 @@
             for (let i = 1; i <= PHOTO_COUNT; i++) {
                 const img = new Image(); img.src = `${i}.jpg`;
                 img.onload = () => {
-                    loadedImages.push(img);
-                    if (loadedImages.length <= TREE_LIMIT) addPhotoToTree(img);
+                    loadedImages[i-1] = img;
+                    if (i <= TREE_LIMIT) addPhotoToTree(img, i-1);
                     const p1 = document.createElement('img'); p1.src = img.src;
                     const p2 = document.createElement('img'); p2.src = img.src;
-                    stripT.appendChild(p1);
-                    stripB.insertBefore(p2, stripB.firstChild); 
-                    if (loadedImages.length === PHOTO_COUNT) {
-                        stripT.innerHTML += stripT.innerHTML; 
-                        stripB.innerHTML += stripB.innerHTML;
+                    stripT.appendChild(p1); stripB.insertBefore(p2, stripB.firstChild); 
+                    if (loadedImages.filter(x=>x).length === PHOTO_COUNT) {
+                        stripT.innerHTML += stripT.innerHTML; stripB.innerHTML += stripB.innerHTML;
                     }
                 };
             }
         }
 
-        function addPhotoToTree(img) {
+        function addPhotoToTree(img, idx) {
             const canvas = document.createElement('canvas'); canvas.width = 256; canvas.height = 256;
             const ctx = canvas.getContext('2d'); ctx.beginPath(); ctx.arc(128, 128, 128, 0, Math.PI*2); ctx.clip();
             ctx.drawImage(img, 0, 0, 256, 256);
             const mesh = new THREE.Mesh(new THREE.SphereGeometry(3.2, 32, 32), new THREE.MeshBasicMaterial({ map: new THREE.CanvasTexture(canvas) }));
             const y = Math.random() * 60; const r = (1 - y/75) * 32 + 2; const a = Math.random() * Math.PI * 2;
             mesh.position.set(Math.cos(a)*r, y-10, Math.sin(a)*r);
+            mesh.userData = { index: idx };
             treeGroup.add(mesh); photoMeshes.push(mesh);
         }
 
-        function startHandTracking() {
-            const vid = document.getElementById('input_video');
-            vid.style.display = 'block';
-            const hands = new Hands({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
-            hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7 });
-            hands.onResults(results => {
-                let hR = null, hL = null;
-                if (results.multiHandLandmarks) {
-                    results.multiHandLandmarks.forEach((lm, i) => {
-                        if(results.multiHandedness[i].label === 'Right') hR = lm; else hL = lm;
-                    });
-                }
-                const wish = document.getElementById('wish-wall');
-                if (hR) { 
-                    const thumbIndexDist = Math.hypot(hR[4].x - hR[8].x, hR[4].y - hR[8].y);
-                    const isMiddleDown = hR[12].y > hR[9].y;
-                    if (thumbIndexDist > 0.15 && isMiddleDown) {
-                        wish.style.display = 'flex'; setTimeout(()=>wish.classList.add('active'), 10);
-                    } else {
-                        wish.classList.remove('active'); setTimeout(()=>wish.style.display='none', 800);
-                    }
-                }
-                if (hL) { 
-                    const d = Math.hypot(hL[8].x - hL[20].x, hL[8].y - hL[20].y);
-                    state.targetExplosion = d > 0.4 ? 1 : 0;
-                }
-            });
-            new Camera(vid, { onFrame: async () => { await hands.send({image: vid}); }, width: 320, height: 240 }).start();
+        function showPhoto(idx) {
+            if (loadedImages[idx]) {
+                document.getElementById('modal-img').src = loadedImages[idx].src;
+                document.getElementById('photo-modal').classList.add('active');
+                state.currentIndex = idx;
+            }
         }
 
         function initTouch() {
+            const modal = document.getElementById('photo-modal');
+            const wish = document.getElementById('wish-wall');
             window.addEventListener('touchstart', (e) => {
                 const now = Date.now();
-                if (now - state.lastTap < 300) { 
-                    const wish = document.getElementById('wish-wall');
+                
+                // 連點三下開啟驚喜牆
+                if (now - state.lastTapTime < 500) {
+                    state.tapCount++;
+                } else {
+                    state.tapCount = 1;
+                }
+                state.lastTapTime = now;
+
+                if (state.tapCount === 3) {
                     if(wish.style.display === 'flex') { wish.classList.remove('active'); setTimeout(()=>wish.style.display='none',800); }
                     else { wish.style.display = 'flex'; setTimeout(()=>wish.classList.add('active'),10); }
+                    state.tapCount = 0;
                 }
-                state.lastTap = now;
-                if (e.touches.length === 2) {
-                    state.pinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
+
+                if (e.touches.length === 1) {
+                    state.startX = e.touches[0].pageX;
+                    if(!modal.classList.contains('active')) {
+                        mouse.x = (e.touches[0].clientX / window.innerWidth) * 2 - 1;
+                        mouse.y = -(e.touches[0].clientY / window.innerHeight) * 2 + 1;
+                        raycaster.setFromCamera(mouse, camera);
+                        const intersects = raycaster.intersectObjects(photoMeshes);
+                        if (intersects.length > 0) showPhoto(intersects[0].object.userData.index);
+                    }
                 }
+                if (e.touches.length === 2) state.pinchDist = Math.hypot(e.touches[0].pageX - e.touches[1].pageX, e.touches[0].pageY - e.touches[1].pageY);
             });
             window.addEventListener('touchmove', (e) => {
                 if (e.touches.length === 2) { 
@@ -241,22 +193,45 @@
                     state.targetExplosion = dist > state.pinchDist * 1.2 ? 1 : (dist < state.pinchDist * 0.8 ? 0 : state.targetExplosion);
                 }
             });
+            window.addEventListener('touchend', (e) => {
+                if (modal.classList.contains('active')) {
+                    const diffX = e.changedTouches[0].pageX - state.startX;
+                    if (Math.abs(diffX) > 50) {
+                        const newIdx = diffX > 0 ? (state.currentIndex - 1 + PHOTO_COUNT) % PHOTO_COUNT : (state.currentIndex + 1) % PHOTO_COUNT;
+                        showPhoto(newIdx);
+                    } else if (Math.abs(diffX) < 5) modal.classList.remove('active');
+                }
+            });
+        }
+
+        function startHandTracking() {
+            const vid = document.getElementById('input_video'); vid.style.display = 'block';
+            const hands = new Hands({locateFile: (f) => `https://cdn.jsdelivr.net/npm/@mediapipe/hands/${f}`});
+            hands.setOptions({ maxNumHands: 2, modelComplexity: 1, minDetectionConfidence: 0.7 });
+            hands.onResults(results => {
+                let hR = null, hL = null;
+                if (results.multiHandLandmarks) results.multiHandLandmarks.forEach((lm, i) => { if(results.multiHandedness[i].label === 'Right') hR = lm; else hL = lm; });
+                const wish = document.getElementById('wish-wall');
+                if (hR) { 
+                    const thumbIndexDist = Math.hypot(hR[4].x - hR[8].x, hR[4].y - hR[8].y);
+                    const isMiddleDown = hR[12].y > hR[9].y;
+                    if (thumbIndexDist > 0.15 && isMiddleDown) { wish.style.display = 'flex'; setTimeout(()=>wish.classList.add('active'), 10); }
+                    else { wish.classList.remove('active'); setTimeout(()=>wish.style.display='none', 800); }
+                }
+                if (hL) { const d = Math.hypot(hL[8].x - hL[20].x, hL[8].y - hL[20].y); state.targetExplosion = d > 0.4 ? 1 : 0; }
+            });
+            new Camera(vid, { onFrame: async () => { await hands.send({image: vid}); }, width: 320, height: 240 }).start();
         }
 
         document.getElementById('btn-start').addEventListener('click', () => {
             document.getElementById('start-screen').style.display = 'none';
             document.getElementById('main-title').style.opacity = 1;
-            const audio = new Audio("Sia - Snowman.mp3");
-            audio.loop = true;
-            audio.play().catch(() => {
-                audio.src = "https://www.soundboard.com/handler/DownLoadTrack.ashx?cliptitle=Sia+-+Snowman&filename=m4/MjIx/221856-4c740348-773a-4467-8722-e781e5b8d003.mp3";
-                audio.play();
-            });
-            initThree(); loadPhotos();
-            if(isMobile) { initTouch(); document.getElementById('hint-text').innerText = "雙擊開啟膠捲 | 兩指縮放爆炸"; }
-            else { try { startHandTracking(); document.getElementById('hint-text').innerText = "右手比7開啟膠捲 | 左手開掌爆炸"; } catch(e) {} }
+            const audio = new Audio("Sia - Snowman.mp3"); audio.loop = true;
+            audio.play().catch(() => { audio.src = "https://www.soundboard.com/handler/DownLoadTrack.ashx?cliptitle=Sia+-+Snowman&filename=m4/MjIx/221856-4c740348-773a-4467-8722-e781e5b8d003.mp3"; audio.play(); });
+            initThree(); loadPhotos(); initTouch();
+            if(!isMobile) try { startHandTracking(); document.getElementById('hint-text').innerText = "右手比7開啟膠捲 | 左手開掌爆炸"; } catch(e) {}
+            else document.getElementById('hint-text').innerText = "單點照片放大 | 左右滑動切換 | 連點三下開啟膠捲";
         });
-        window.onload = () => { document.getElementById('status-text').innerText = "Ready ✨"; };
     </script>
 </body>
 </html>
