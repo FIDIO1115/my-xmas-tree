@@ -42,7 +42,7 @@
     </div>
     <div id="wish-wall">
         <div class="film-container"><div class="film-strip strip-top" id="strip-top"></div></div>
-        <div id="wish-text">千代 祝你聖誕快樂<br><span style="font-size: 1.2rem; opacity: 0.8;">每一幀都是今年的珍貴回憶</span></div>
+        <div id="wish-text">千代 祝你聖誕快樂<br><span style="font-size: 1.2rem; opacity: 0.8;">每一幀都是我們的珍貴回憶</span></div>
         <div class="film-container"><div class="film-strip strip-bottom" id="strip-bottom"></div></div>
     </div>
     <div id="photo-modal"><img id="modal-img" src=""></div>
@@ -204,14 +204,21 @@
                 let hR = null, hL = null;
                 if (results.multiHandLandmarks) results.multiHandLandmarks.forEach((lm, i) => { if(results.multiHandedness[i].label === 'Right') hR = lm; else hL = lm; });
                 const wish = document.getElementById('wish-wall');
-                
+                const modal = document.getElementById('photo-modal');
+
                 if (hR) { 
                     const thumbIndexDist = Math.hypot(hR[4].x - hR[8].x, hR[4].y - hR[8].y);
                     const isMiddleDown = hR[12].y > hR[9].y;
                     
-                    // 比7開啟驚喜牆
-                    if (thumbIndexDist > 0.15 && isMiddleDown) { wish.style.display = 'flex'; setTimeout(()=>wish.classList.add('active'), 10); }
-                    else { wish.classList.remove('active'); setTimeout(()=>wish.style.display='none', 800); }
+                    // 比7開啟驚喜牆：此時強制關閉彈出的大圖
+                    if (thumbIndexDist > 0.15 && isMiddleDown) { 
+                        modal.classList.remove('active'); // 強制關閉大圖
+                        wish.style.display = 'flex'; 
+                        setTimeout(()=>wish.classList.add('active'), 10); 
+                    } else { 
+                        wish.classList.remove('active'); 
+                        setTimeout(()=>wish.style.display='none', 800); 
+                    }
                     
                     // 捏合換圖邏輯
                     if (thumbIndexDist < 0.04) {
@@ -223,10 +230,7 @@
                     } else { state.pinchLocked = false; }
                 }
                 
-                if (hL) { 
-                    const d = Math.hypot(hL[8].x - hL[20].x, hL[8].y - hL[20].y); 
-                    state.targetExplosion = d > 0.4 ? 1 : 0; 
-                }
+                if (hL) { const d = Math.hypot(hL[8].x - hL[20].x, hL[8].y - hL[20].y); state.targetExplosion = d > 0.4 ? 1 : 0; }
             });
             new Camera(vid, { onFrame: async () => { await hands.send({image: vid}); }, width: 320, height: 240 }).start();
         }
